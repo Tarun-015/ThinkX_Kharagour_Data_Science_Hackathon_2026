@@ -1,0 +1,12 @@
+name: kharagpur_trackb
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - torch>=2.1.0
+      - transformers>=4.40.0
+      - sentence-transformers>=2.2.2
+      - pathway>=0.1.10
