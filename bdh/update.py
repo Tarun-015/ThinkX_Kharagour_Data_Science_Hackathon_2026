@@ -1,16 +1,26 @@
-# bdh/update.py
-from bdh.state import MemoryState
+import json
+import os
 
-def update_memory(entry, memory_path="outputs/memory.json"):
-    """
-    entry = {
-        "story_name": str,
-        "character": str,
-        "snippet": str,
-        "prediction": int,
-        "confidence": float
-    }
-    """
-    memory = MemoryState(memory_path)
-    key = f"{entry['story_name']}_{entry['character']}"
-    memory.add(key, entry)
+MEMORY_PATH = "outputs/memory.json"
+
+def update_memory(entry):
+    os.makedirs("outputs", exist_ok=True)
+
+    # Load existing memory (list)
+    if os.path.exists(MEMORY_PATH):
+        with open(MEMORY_PATH, "r", encoding="utf-8") as f:
+            try:
+                memory = json.load(f)
+            except json.JSONDecodeError:
+                memory = []
+    else:
+        memory = []
+
+    # Ensure list
+    if not isinstance(memory, list):
+        memory = []
+
+    memory.append(entry)
+
+    with open(MEMORY_PATH, "w", encoding="utf-8") as f:
+        json.dump(memory, f, indent=2)

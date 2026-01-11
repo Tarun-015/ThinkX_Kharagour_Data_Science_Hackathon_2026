@@ -1,44 +1,16 @@
-{
-  "In search of the castaways_Thalcave": {
-    "story_name": "In search of the castaways",
-    "character": "Thalcave",
-    "snippet": "Slave-raiders seized his little sister Nawee; too young to save her, he swore ever after to help anyone in distress....",
-    "prediction": -1,
-    "confidence": 0.0
+[
+  {
+    "character": "Unknown",
+    "caption": "",
+    "prediction": 0,
+    "confidence": 0.99,
+    "snippet": "Ten years later, Mira led the army.\n"
   },
-  "In search of the castaways_Tom Ayrton/Ben Joyce": {
-    "story_name": "In search of the castaways",
-    "character": "Tom Ayrton/Ben Joyce",
-    "snippet": "Solitude brought pride and remorse to the surface; again and again his diary confessed both self-loathing for the betrayal and relief that no one knew...",
-    "prediction": -1,
-    "confidence": 0.0
-  },
-  "In search of the castaways_Kai-Koumou": {
-    "story_name": "In search of the castaways",
-    "character": "Kai-Koumou",
-    "snippet": "He had an extraordinary memory for geographical knowledge, and could determine the location of shipwrecks by observing tidal changes. He viewd volcani...",
-    "prediction": -1,
-    "confidence": 0.0
-  },
-  "In search of the castaways_Jacques Paganel": {
-    "story_name": "In search of the castaways",
-    "character": "Jacques Paganel",
-    "snippet": "The Royal Navy frigate HMS Austin, bound for Australia and New Zealand under Lieutenant Grant, quietly promoted the sympathetic young sailor to ship\u2019s...",
-    "prediction": -1,
-    "confidence": 0.0
-  },
-  "The Count of Monte Cristo_Noirtier": {
-    "story_name": "The Count of Monte Cristo",
-    "character": "Noirtier",
-    "snippet": "**Family Trauma**: His father was guillotined in 1792 for hiding exiled aristocrats; watching the blade fall left him with chronic hand tremors and li...",
-    "prediction": -1,
-    "confidence": 0.0
-  },
-  "The Count of Monte Cristo_Faria": {
-    "story_name": "The Count of Monte Cristo",
-    "character": "Faria",
-    "snippet": "As a Jesuit novice he was sent to Goa, secretly read the old Indian medical text Charaka Samhita and laid the groundwork for his later toxicology expe...",
-    "prediction": -1,
-    "confidence": 0.0
+  {
+    "character": "Unknown",
+    "caption": "",
+    "prediction": 1,
+    "confidence": 0.593,
+    "snippet": "Ravi used his knowledge of the stars and ocean currents to guide his ship safely\nthrough a dangerous storm.\n"
   }
-}
+]

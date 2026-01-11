@@ -1,118 +1,126 @@
 import os
+import json
 import torch
-import pandas as pd
 import torch.nn as nn
-import torch.optim as optim
+import pandas as pd
 from embedding.encoder import TextEncoder
 from model.compatibility_classifier import CompatibilityClassifier
-from bdh.update import update_memory
 
-# ---------------- PATHS ----------------
-DATA_DIR = "data"
-INPUT_DIR = "input"
-OUTPUT_PATH = "outputs/memory.json"
+# ---------------- CONFIG ----------------
+TRAIN_PATH = "input/train.csv"
+TEST_PATH = "input/test.csv"
+OUTPUT_DIR = "outputs"
+MODEL_PATH = os.path.join(OUTPUT_DIR, "classifier.pth")
+MEMORY_PATH = os.path.join(OUTPUT_DIR, "memory.json")
 
-# ---------------- HELPERS ----------------
-def combine_text(row):
-    parts = [str(row['book_name']), str(row['char']), str(row['caption']), str(row['content'])]
-    return " ".join([p for p in parts if p.strip()])
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-def chunk_text(text, max_chars=2000):
-    return [text[i:i+max_chars] for i in range(0, len(text), max_chars)]
+device = torch.device("cpu")
 
-# ---------------- TRAINING ----------------
-def train_classifier(train_path="data/train.csv"):
-    print("📘 Training classifier on train.csv ...")
-    df = pd.read_csv(train_path)
-    df['text'] = df.apply(combine_text, axis=1)
-    label_map = {'contradict': 0, 'consistent': 1}
-    y = torch.tensor(df['label'].map(label_map).values)
+# ---------------- TRAIN ----------------
+def train_classifier():
+    print("\n🚀 Training classifier...")
+
+    if not os.path.exists(TRAIN_PATH):
+        raise FileNotFoundError(f"❌ Train file not found: {TRAIN_PATH}")
+
+    df = pd.read_csv(TRAIN_PATH)
+
+    if "label" not in df.columns:
+        raise ValueError("❌ 'label' column required in train.csv")
 
     encoder = TextEncoder()
-    classifier = CompatibilityClassifier()
-    optimizer = optim.Adam(classifier.parameters(), lr=1e-3)
-    criterion = nn.CrossEntropyLoss()
+    model = CompatibilityClassifier().to(device)
 
-    embeddings = []
-    for text in df['text']:
-        emb = encoder.encode(text)
-        embeddings.append(emb)
-    X = torch.vstack(embeddings)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-    # --- training loop ---
-    classifier.train()
-    for epoch in range(5):  # small hackathon run
+    # Balance labels
+    label_counts = df["label"].value_counts().to_dict()
+    weight = torch.tensor(
+        [
+            1.0 / label_counts.get(0, 1),
+            1.0 / label_counts.get(1, 1),
+        ],
+        dtype=torch.float,
+    )
+    criterion = nn.CrossEntropyLoss(weight=weight)
+
+    X1, X2, y = [], [], []
+    label_map = {
+    "contradict": 0,
+    "consistent": 1
+    }
+
+    for _, row in df.iterrows():
+        story = str(row["content"])
+        snippet = f"{row.get('char','')} {row.get('caption','')} {row['content']}"
+
+        X1.append(encoder.encode(story))
+        X2.append(encoder.encode(snippet))
+
+        label = str(row["label"]).strip().lower()
+        y.append(label_map[label])
+
+
+    X1 = torch.cat(X1).to(device)
+    X2 = torch.cat(X2).to(device)
+    y = torch.tensor(y).to(device)
+
+    model.train()
+    for epoch in range(5):
         optimizer.zero_grad()
-        # simple self-pairing (X,X) for demonstration
-        outputs = classifier(X, X)
-        loss = criterion(outputs, y)
+        logits = model(X1, X2)
+        loss = criterion(logits, y)
         loss.backward()
         optimizer.step()
         print(f"Epoch {epoch+1}: loss={loss.item():.4f}")
 
-    torch.save(classifier.state_dict(), "outputs/classifier.pth")
-    print("✅ Training complete — model saved to outputs/classifier.pth")
-    return classifier
+    torch.save(model.state_dict(), MODEL_PATH)
+    print(f"✅ Model saved to {MODEL_PATH}")
 
 # ---------------- INFERENCE ----------------
 def run_inference():
-    print("🔍 Running inference on input stories ...")
+    print("\n🔍 Running inference...")
 
-    # 1️⃣ Load stories
-    stories = {}
-    for file in os.listdir(INPUT_DIR):
-        if file.lower().endswith(".txt"):
-            with open(os.path.join(INPUT_DIR, file), "r", encoding="utf-8") as f:
-                stories[file.replace(".txt", "").strip()] = f.read()
+    if not os.path.exists(TEST_PATH):
+        print("⚠️ No test.csv found — skipping inference")
+        return
 
-    # 2️⃣ Load test dataset
-    test_path = os.path.join(INPUT_DIR, "test.csv")
-    test_df = pd.read_csv(test_path)
-
-    # 3️⃣ Load encoder + trained classifier
     encoder = TextEncoder()
-    classifier = CompatibilityClassifier()
-    ckpt = "outputs/classifier.pth"
-    if os.path.exists(ckpt):
-        classifier.load_state_dict(torch.load(ckpt))
-    classifier.eval()
+    model = CompatibilityClassifier().to(device)
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
+    model.eval()
 
-    # 4️⃣ Process each story
-    for story_name, story_text in stories.items():
-        related = test_df[test_df["book_name"].str.lower().str.contains(story_name.lower())]
-        if related.empty:
-            print(f"⚠️ No test rows for {story_name}")
-            continue
+    df = pd.read_csv(TEST_PATH)
+    results = []
 
-        # Encode long story in chunks → mean-pool
-        chunks = chunk_text(story_text)
-        story_embs = [encoder.encode(c) for c in chunks]
-        story_emb = torch.mean(torch.vstack(story_embs), dim=0, keepdim=True)
+    with torch.no_grad():
+        for _, row in df.iterrows():
+            story = str(row["content"])
+            snippet = f"{row.get('char','')} {row.get('caption','')} {row['content']}"
 
-        for _, row in related.iterrows():
-            snippet = str(row["content"])
-            character = str(row["char"])
-            snippet_emb = encoder.encode(snippet)
+            e1 = encoder.encode(story)
+            e2 = encoder.encode(snippet)
 
-            with torch.no_grad():
-                out = classifier(story_emb, snippet_emb)
-                pred = torch.argmax(out, dim=1).item()
-                conf = out[0, pred].item()
+            logits = model(e1, e2)
+            probs = torch.softmax(logits, dim=1)
+            pred = int(torch.argmax(probs))
+            conf = float(probs[0, pred])
 
-            entry = {
-                "story_name": story_name,
-                "character": character,
-                "snippet": snippet[:200] + "...",
-                "prediction": int(pred),
+            results.append({
+                "story": story[:100],
+                "prediction": pred,
                 "confidence": round(conf, 3)
-            }
-            update_memory(entry)
+            })
 
-    print("✅ Inference complete. Results saved in outputs/memory.json")
+    with open(MEMORY_PATH, "w", encoding="utf-8") as f:
+        json.dump(results, f, indent=2)
+
+    print(f"✅ Inference saved to {MEMORY_PATH}")
 
 # ---------------- MAIN ----------------
 if __name__ == "__main__":
-    os.makedirs("outputs", exist_ok=True)
-    if not os.path.exists("outputs/classifier.pth"):
-        train_classifier()  # train once
+    print("\n🚀 Track B Pipeline Starting")
+    train_classifier()
     run_inference()
+    print("🏁 Done")
