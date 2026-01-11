@@ -51,4 +51,4 @@ with torch.no_grad():
         })
 
 pd.DataFrame(results).to_csv(OUTPUT_PATH, index=False)
-print("✅ results.csv generated successfully")
+print("results.csv generated successfully")

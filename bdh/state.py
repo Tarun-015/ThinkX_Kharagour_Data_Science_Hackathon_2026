@@ -1,4 +1,4 @@
-# bdh/state.py
+
 import json, os
 
 class MemoryState:

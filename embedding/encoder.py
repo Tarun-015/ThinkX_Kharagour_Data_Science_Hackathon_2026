@@ -7,4 +7,4 @@ class TextEncoder:
 
     def encode(self, text: str):
         emb = self.model.encode([text], convert_to_tensor=True)
-        return emb  # (1, 384)
+        return emb 

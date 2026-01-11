@@ -9,7 +9,7 @@ from model.compatibility_classifier import CompatibilityClassifier
 from bdh.update import update_memory
 
 
-# ================== CONFIG ==================
+
 st.set_page_config(
     page_title="Kharagpur Hackathon – Track B",
     layout="wide"
@@ -19,14 +19,14 @@ MODEL_PATH = "outputs/classifier.pth"
 MEMORY_PATH = "outputs/memory.json"
 
 
-# ================== LOAD MODEL ==================
+# LOAD 
 @st.cache_resource
 def load_model():
     encoder = TextEncoder()
     classifier = CompatibilityClassifier()
 
     if not os.path.exists(MODEL_PATH):
-        st.error("❌ Model not found. Run `python main.py` first.")
+        st.error(" Model not found. Run `python main.py` first.")
         st.stop()
 
     classifier.load_state_dict(
@@ -39,7 +39,7 @@ def load_model():
 encoder, classifier = load_model()
 
 
-# ================== UI ==================
+
 st.markdown(
     "<h1 style='text-align:center;'>📘 Story Consistency Checker</h1>",
     unsafe_allow_html=True
@@ -65,7 +65,7 @@ with col2:
     )
 
 
-# ================== HARD CONTRADICTION RULE ==================
+# = HARD CONTRADICTION RULE =
 def hard_contradiction_rule(story, snippet):
     rules = [
         ("born blind", "watched"),
@@ -78,19 +78,19 @@ def hard_contradiction_rule(story, snippet):
     return any(a in s and b in c for a, b in rules)
 
 
-# ================== ANALYSIS ==================
+#  ANALYSIS 
 if st.button("🔍 Analyze Consistency"):
     if not story.strip() or not snippet.strip():
         st.warning("Please provide both story and snippet.")
     else:
         with st.spinner("Analyzing..."):
 
-            # 🔴 HARD RULE OVERRIDE
+            # HARD RULE OVERRIDE
             if hard_contradiction_rule(story, snippet):
                 pred = 0
                 confidence = 0.99
 
-            # 🧠 MODEL INFERENCE
+            # MODEL INFERENCE
             else:
                 story_emb = encoder.encode(story)      # (1, 384)
                 snippet_emb = encoder.encode(snippet)  # (1, 384)
@@ -101,7 +101,7 @@ if st.button("🔍 Analyze Consistency"):
                     pred = torch.argmax(probs, dim=1).item()
                     confidence = probs[0, pred].item()
 
-            # 🎯 DISPLAY RESULT
+            #  DISPLAY RESULT
             label = "✅ CONSISTENT" if pred == 1 else "❌ CONTRADICT"
             color = "#2ECC71" if pred == 1 else "#E74C3C"
 
@@ -112,7 +112,7 @@ if st.button("🔍 Analyze Consistency"):
 
             st.caption(f"Confidence: {confidence * 100:.2f}%")
 
-            # 💾 SAVE MEMORY
+            # SAVE MEMORY
             entry = {
                 "character": character or "Unknown",
                 "caption": caption,
@@ -125,9 +125,9 @@ if st.button("🔍 Analyze Consistency"):
             st.success("Result saved to memory.")
 
 
-# ================== MEMORY VIEW ==================
+# MEMORY VIEW 
 st.markdown("<hr>", unsafe_allow_html=True)
-st.subheader("📚 Memory Log")
+st.subheader(" Memory Log")
 
 if os.path.exists(MEMORY_PATH):
     with open(MEMORY_PATH, "r", encoding="utf-8") as f:

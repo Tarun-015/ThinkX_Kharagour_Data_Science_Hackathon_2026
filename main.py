@@ -6,7 +6,6 @@ import pandas as pd
 from embedding.encoder import TextEncoder
 from model.compatibility_classifier import CompatibilityClassifier
 
-# ---------------- CONFIG ----------------
 TRAIN_PATH = "input/train.csv"
 TEST_PATH = "input/test.csv"
 OUTPUT_DIR = "outputs"
@@ -17,17 +16,16 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 device = torch.device("cpu")
 
-# ---------------- TRAIN ----------------
 def train_classifier():
-    print("\n🚀 Training classifier...")
+    print("\n Training classifier...")
 
     if not os.path.exists(TRAIN_PATH):
-        raise FileNotFoundError(f"❌ Train file not found: {TRAIN_PATH}")
+        raise FileNotFoundError(f"Train file not found: {TRAIN_PATH}")
 
     df = pd.read_csv(TRAIN_PATH)
 
     if "label" not in df.columns:
-        raise ValueError("❌ 'label' column required in train.csv")
+        raise ValueError("'label' column required in train.csv")
 
     encoder = TextEncoder()
     model = CompatibilityClassifier().to(device)
@@ -76,14 +74,14 @@ def train_classifier():
         print(f"Epoch {epoch+1}: loss={loss.item():.4f}")
 
     torch.save(model.state_dict(), MODEL_PATH)
-    print(f"✅ Model saved to {MODEL_PATH}")
+    print(f"Model saved to {MODEL_PATH}")
 
-# ---------------- INFERENCE ----------------
+# INFERENCE
 def run_inference():
     print("\n🔍 Running inference...")
 
     if not os.path.exists(TEST_PATH):
-        print("⚠️ No test.csv found — skipping inference")
+        print(" No test.csv found — skipping inference")
         return
 
     encoder = TextEncoder()
@@ -116,11 +114,11 @@ def run_inference():
     with open(MEMORY_PATH, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
 
-    print(f"✅ Inference saved to {MEMORY_PATH}")
+    print(f"Inference saved to {MEMORY_PATH}")
 
-# ---------------- MAIN ----------------
+#main
 if __name__ == "__main__":
-    print("\n🚀 Track B Pipeline Starting")
+    print("\n Track B Pipeline Starting")
     train_classifier()
     run_inference()
-    print("🏁 Done")
+    print(" Done")
