@@ -59,3 +59,9 @@ main.py functions as the central orchestrator of the application. Its responsibi
 >Returning results to the UI
 
 This file connects independent components without embedding domain-specific logic within itself.
+
+--------------------------------------
+UI
+
+<img width="1824" height="740" alt="Screenshot 2026-01-11 204201" src="https://github.com/user-attachments/assets/293b0d91-8de0-4318-9db0-9b338f6bbab2" />
+
